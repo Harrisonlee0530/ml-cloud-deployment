@@ -1,0 +1,9 @@
+{
+  "model_name": "spam_ham_svc_pipeline",
+  "labels": [
+    "ham",
+    "spam"
+  ],
+  "input_type": "single text message",
+  "notes": "CountVectorizer + SVC pipeline trained from DSCI 571 Lab 3 workflow"
+}
