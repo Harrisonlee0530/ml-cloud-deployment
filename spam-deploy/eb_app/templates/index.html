@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Spam / Ham Detector</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: rgba(255, 255, 255, 0.08);
+      --panel-border: rgba(255, 255, 255, 0.14);
+      --text: #e5e7eb;
+      --muted: #cbd5e1;
+      --accent: #60a5fa;
+      --accent-2: #34d399;
+      --danger: #f87171;
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(96,165,250,0.25), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(52,211,153,0.18), transparent 25%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 980px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+      line-height: 1.1;
+    }
+
+    p.lead {
+      margin: 0 0 22px 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .badge {
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      padding: 16px;
+      font-size: 1rem;
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(96,165,250,0.18);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.10);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .result-box {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .result-label {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin: 8px 0 0 0;
+    }
+
+    .spam {
+      color: #fca5a5;
+    }
+
+    .ham {
+      color: #86efac;
+    }
+
+    .error {
+      color: var(--danger);
+      margin-top: 16px;
+      font-weight: 600;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .small {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .api-block {
+      background: rgba(2,6,23,0.55);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 16px;
+      overflow-x: auto;
+      margin-top: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .hidden-honeypot {
+      position: absolute !important;
+      left: -10000px !important;
+      top: auto !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+    }
+
+    @media (max-width: 860px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="card">
+      <h1>Spam / Ham Detector</h1>
+      <p class="lead">
+        Enter a message below and send it to a model hosted on SageMaker.
+        The web app runs on Elastic Beanstalk and returns whether the message looks like
+        <strong>spam</strong> or <strong>ham</strong>.
+      </p>
+
+      <div class="badge-row">
+        <span class="badge">Elastic Beanstalk + Flask</span>
+        <span class="badge">SageMaker endpoint</span>
+        <span class="badge">API available</span>
+      </div>
+
+      <form action="/predict" method="post" id="predict-form">
+        <label for="message" class="small">Message text</label>
+        <textarea id="message" name="message" placeholder="Type or load a message...">{{ message if message else '' }}</textarea>
+
+        <!-- Honeypot anti-bot field -->
+        <div class="hidden-honeypot" aria-hidden="true">
+          <label for="website">Leave this field empty</label>
+          <input type="text" id="website" name="website" autocomplete="off">
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary">Classify message</button>
+          <button type="button" class="btn-secondary" id="random-btn">Random message</button>
+        </div>
+      </form>
+
+      {% if prediction %}
+      <div class="result-box">
+        <div class="small">Prediction</div>
+        <div class="result-label {{ prediction|lower }}">
+          {{ prediction|upper }}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if error %}
+      <div class="error">{{ error }}</div>
+      {% endif %}
+    </section>
+
+    <aside class="card">
+      <h2 style="margin-top:0;">Use it from the terminal</h2>
+      <p class="muted">
+        This app also exposes a JSON API endpoint, so you can call it with <code>curl</code>.
+      </p>
+
+      <div class="api-block">
+curl -X POST "{{ request.host_url.rstrip('/') }}/api/predict" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Congratulations! You have won a free ticket. Reply now!"}'
+      </div>
+
+      <p class="muted" style="margin-top:16px;">
+        Expected JSON response:
+      </p>
+
+      <div class="api-block">
+{
+  "message": "Congratulations! You have won a free ticket. Reply now!",
+  "prediction": "spam",
+  "raw_result": {
+    "predicted_labels": ["spam"]
+  }
+}
+      </div>
+
+      <p class="muted" style="margin-top:20px;">
+        The <strong>Random message</strong> button uses free public APIs to fetch a natural-language
+        message and then classifies it.
+      </p>
+    </aside>
+  </div>
+
+  <script>
+    const randomBtn = document.getElementById("random-btn");
+    const messageBox = document.getElementById("message");
+
+    randomBtn.addEventListener("click", async () => {
+      randomBtn.disabled = true;
+      randomBtn.textContent = "Loading...";
+
+      try {
+        const res = await fetch("/random-message");
+        const data = await res.json();
+        messageBox.value = data.message || "";
+      } catch (err) {
+        messageBox.value = "Hey, are we still meeting after class today?";
+      } finally {
+        randomBtn.disabled = false;
+        randomBtn.textContent = "Random message";
+      }
+    });
+  </script>
+</body>
+</html>
